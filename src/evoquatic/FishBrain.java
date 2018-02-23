@@ -13,4 +13,8 @@ public class FishBrain {
 		internal = new Brain(20, 20, gen);
 	}
 	
+	public void addNeuron(AbstractNeuron n) {
+		
+	}
+	
 }

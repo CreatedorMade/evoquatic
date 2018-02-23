@@ -1,12 +1,16 @@
 package neurality;
 
 public abstract class AbstractNeuron {
+	
+	public abstract String getName();
+	
+	public void setSensoryData(double d) {};
+	public double getSensoryData() {return 0;}
 	public int[][] inputs = new int[0][2];
 	public double[] values = new double[0];
 	public double[] mods = new double[0];
 	public double output = 0;
 	public int maxInputs = -1;
-	public String name = "";
 	
 	public final void addInput(int x, int y){
 		if(maxInputs != -1 && inputs.length < maxInputs) {
