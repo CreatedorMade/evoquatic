@@ -41,6 +41,15 @@ public class Brain {
 		}
 	}
 	
+	public void generate() {
+		neurons = new AbstractNeuron[sizeX][sizeY];
+		for(int ix = 0; ix < sizeX; ix++) {
+			for(int iy = 0; iy < sizeY; iy++) {
+				neurons[ix][iy] = gen.generateNeuronSpace(ix, iy, false, sizeX, sizeY);
+			}
+		}
+	}
+	
 	public int sizeX() {return sizeX;}
 	public int sizeY() {return sizeY;}
 	
