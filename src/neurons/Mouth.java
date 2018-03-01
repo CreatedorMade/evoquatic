@@ -2,25 +2,23 @@ package neurons;
 
 import neurality.AbstractNeuron;
 
-public class DorsalFin extends AbstractNeuron {
-	double input = 0;
+public class Mouth extends AbstractNeuron {
 	
-	public DorsalFin() {
+	double data = 0;
+	
+	public Mouth() {
 		super();
 		super.maxInputs = 1;
+		super.mods = new double[1];
 	}
 	
 	public String getName() {
-		return "dorsal_fin";
+		return "mouth";
 	}
 	
 	public void eval(int tick) {
 		if(super.values.length != 0) {
-			input = super.values[0];
+			data = super.values[0];
 		}
-	}
-	
-	public double getSensoryData() {
-		return input;
 	}
 }

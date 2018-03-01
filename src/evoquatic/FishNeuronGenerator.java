@@ -14,14 +14,30 @@ public class FishNeuronGenerator extends NeuronGenerator {
 		
 		int selector = (int) Math.round(Math.random()*2);
 		if(selector == 0) {
-			n = new neurons.Average();
+			n = new neurons.Antenna();
 		}else if(selector == 1) {
-			n = new neurons.Negator();
+			n = new neurons.Average();
 		}else if(selector == 2) {
-			n = new neurons.DorsalFin();
-		}else {
+			n = new neurons.Fin();
+		}else if(selector == 3){
+			n = new neurons.Modulator();
+		}else if(selector == 4) {
+			n = new neurons.Mouth();
+		}else if(selector == 5) {
+			n = new neurons.Multiplicator();
+		}else if(selector == 6) {
+			n = new neurons.Negator();
+		}else if(selector == 7) {
+			n = new neurons.Reciprocator();
+		}else if(selector == 8) {
+			n = new neurons.Stomach();
+		}else if(selector == 9) {
 			n = new neurons.Sum();
+		}else {
+			n = new neurons.Timer();
 		}
+		
+		
 		
 		parent.addNeuron(n);
 		return n;
