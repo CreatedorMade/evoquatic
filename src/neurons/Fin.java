@@ -17,7 +17,7 @@ public class Fin extends AbstractNeuron {
 	}
 	
 	public String getName() {
-		return "pelvic_fin";
+		return "fin";
 	}
 	
 	public void eval(int tick) {

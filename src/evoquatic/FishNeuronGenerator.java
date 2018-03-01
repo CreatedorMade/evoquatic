@@ -37,7 +37,13 @@ public class FishNeuronGenerator extends NeuronGenerator {
 			n = new neurons.Timer();
 		}
 		
+		for(int i = 0; i < n.mods.length; i++) {
+			n.mods[i] = Math.random();
+		}
 		
+		do {
+			n.addInput((int) Math.round(Math.random() * x), (int) Math.round(Math.random() * boundY-1));
+		} while(Math.random() < 0.10);
 		
 		parent.addNeuron(n);
 		return n;
