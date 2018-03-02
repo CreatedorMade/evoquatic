@@ -16,7 +16,7 @@ public class EFrame extends JFrame implements ActionListener {
 	
 	JPanel hPanel = new JPanel();
 	JLabel hLabel = new JLabel("Initializing...");
-	
+	JLabel sLabel = new JLabel("ur mom gay");
 	
 	
 	JPanel fPanel = new JPanel();
@@ -33,11 +33,13 @@ public class EFrame extends JFrame implements ActionListener {
 		
 		setLayout(new BorderLayout());
 		
+		hPanel.setLayout(new BorderLayout());
 		hPanel.setBorder(BorderFactory.createCompoundBorder(new EtchedBorder(), new EmptyBorder(5, 5, 5, 5)));
-		hPanel.add(hLabel);
+		hPanel.add(hLabel, BorderLayout.WEST);
+		hPanel.add(sLabel, BorderLayout.EAST);
 		add(hPanel, BorderLayout.PAGE_START);
 		
-		fPanel.setBorder(BorderFactory.createCompoundBorder(new EtchedBorder(), new EmptyBorder(5, 5, 5, 5)));
+		fPanel.setBorder(new EtchedBorder());
 		
 		fPanel.add(pauseButton);
 		pauseButton.addActionListener(this);
@@ -65,10 +67,16 @@ public class EFrame extends JFrame implements ActionListener {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource() == pauseButton) sim.state = 0;
-		else if(e.getSource() == realButton) sim.state = 1;
-		else if(e.getSource() == incubateButton) sim.state = 2;
-		else if(e.getSource() == hideButton) doRendering = false;
+		if(e.getSource() == pauseButton) {
+			sim.state = 0;
+			thread.stop();
+		} else if(e.getSource() == realButton) {
+			sim.state = 1;
+			thread.realtime();
+		} else if(e.getSource() == incubateButton) {
+			sim.state = 2;
+			thread.incubate();
+		} else if(e.getSource() == hideButton) doRendering = false;
 		else if(e.getSource() == showButton) doRendering = true;
 		
 		panel.doRendering = doRendering;
