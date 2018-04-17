@@ -28,7 +28,10 @@ public class Console {
 			
 			if(seconds.length() == 1) seconds = "0"+seconds;
 			
-			for(int i = 0; i < s.length; i++) System.out.println("["+minutes+":"+seconds+"] "+s[i]);
+			for(int i = 0; i < s.length; i++) {
+				System.out.println("["+minutes+":"+seconds+"] "+s[i]);
+				EPanel.log("["+minutes+":"+seconds+"] "+s[i]);
+			}
 		}
 	}
 	
@@ -44,6 +47,7 @@ public class Console {
 			
 			for(int i = 0; i < s.length; i++) {
 				System.out.println("["+minutes+":"+seconds+" DEBUG] "+s[i]);
+				EPanel.log("["+minutes+":"+seconds+" DEBUG] "+s[i]);
 			}
 		}
 	}

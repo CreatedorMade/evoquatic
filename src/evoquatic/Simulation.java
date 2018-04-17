@@ -1,5 +1,7 @@
 package evoquatic;
 
+import java.awt.event.MouseEvent;
+
 public class Simulation {
 	
 	public static final int STATE_LOADING = -1;
@@ -21,6 +23,7 @@ public class Simulation {
 	}
 	
 	long time;
+	public int tool = 0;
 	int size = 5;
 	
 	public Simulation() {
@@ -74,5 +77,9 @@ public class Simulation {
 				if(!running) new Thread(null, this, "SimThread").start();
 			}
 		}
+	}
+	
+	public void click(MouseEvent e) {
+		Console.log("Sipp and succ, cool and good");
 	}
 }

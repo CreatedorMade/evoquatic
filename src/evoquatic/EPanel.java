@@ -5,11 +5,21 @@ import javax.swing.JPanel;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 @SuppressWarnings("serial")
 public class EPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener {
+	
+	private static ArrayList<String> console = new ArrayList<String>();
+	private static int consoleLength = 0;
+	private static int consoleTimer = 0;
+	
+	public static void log(String s) {
+		console.add(s);
+		consoleLength++;
+		consoleTimer = 150;
+	}
 	
 	private class graphicsTicker implements Runnable {
 		EPanel panel;
@@ -45,9 +55,15 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	double zoom = 1;
 	double zoomTarget = 1;
 	
+	BaseHud baseHud = new BaseHud();
+	CreationPanel createHud = new CreationPanel();
+	
 	boolean enableUserZooming = false;
 	
+	boolean mouseDown = false;
+	
 	public EPanel(Simulation sim) {
+		HudPart.panel = this;
 		this.sim = sim;
 		
 		addMouseListener(this);
@@ -74,6 +90,13 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	boolean overBegin = false;
 	
 	void tick() {
+		
+		if(consoleTimer > 0) consoleTimer--;
+		else if(consoleLength > 0) {
+			consoleLength--;
+			console.remove(0);
+			consoleTimer = 150;
+		}
 		
 		if(overPlay) playFade -= (playFade-1)/10f;
 		else playFade -= playFade/10f;
@@ -169,7 +192,12 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 			g.setColor(new Color(1f, 1f, 1f, beginFade/8+0.125f));
 			g.fillOval((int) (width/2-50*beginFade)+75, (int) (height/2-50*beginFade)+225, (int) (100*beginFade), (int) (100*beginFade));
 			g.setColor(new Color(1f, 1f, 1f));
-			g.drawString("cancel", (width-getFontMetrics(f).stringWidth("cancel"))/2+75, height/2+230);
+			g.drawString("create", (width-getFontMetrics(f).stringWidth("create"))/2+75, height/2+230);
+			
+			//Draw the hud
+			createHud.x = (width-createHud.width)/2;
+			createHud.y = (height-createHud.height)/2;
+			createHud.render(g);
 		} else if(sim.state == Simulation.STATE_TITLE_LOAD) {
 			//Add a "breathing" effect to the zoom
 			zoomTarget = (Math.sin((float) (tick)/100)*0.05+1)*0.5;
@@ -191,6 +219,27 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 			g.fillRect(width/2-350, height/2-50, 700, 100);
 			g.setColor(new Color(1f, 0.25f, 0.25f));
 			g.drawString("currently nonfunctional (click in center)", (width-getFontMetrics(f).stringWidth("currently nonfunctional (click in center)"))/2, height/2+5);
+		} else if(sim.state == Simulation.STATE_GAME) {
+			//Draw the hud elements
+			baseHud.width = width;
+			baseHud.height = height;
+			baseHud.render(g);
+		}
+
+		g.setTransform(new AffineTransform());
+		
+		
+		//Draw the console
+		Font f = new Font("Monospaced", Font.PLAIN, 18);
+		g.setFont(f);
+		int i = 0;
+		for(String s : console) {
+			int k = console.size() - i - 1;
+			g.setColor(new Color(0f, 0f, 0f, 0.25f));
+			g.fillRect(0, height-(k+1)*20, getFontMetrics(f).stringWidth(s)+4, 20);
+			g.setColor(new Color(1f, 1f, 1f));
+			g.drawString(s, 2, height-k*20-4);
+			i++;
 		}
 	}
 	
@@ -221,6 +270,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	}
 	
 	public void mousePressed(MouseEvent e) {
+		mouseDown = true;
 		mouseMoved(e);
 		
 		if(sim.state == Simulation.STATE_TITLE_MAIN) {
@@ -242,29 +292,32 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 				overLCancel = false;
 			} else if(overBegin) {
 				zoomTarget = 1;
+				enableUserZooming = true;
 				sim.state = Simulation.STATE_GAME;
+				Console.log("Creating simulation...");
+			} else {
+				createHud.click(e);
 			}
+		} else if(sim.state == Simulation.STATE_GAME) {
+			baseHud.click(e);
+			if(!baseHud.lastMouseConsumed) sim.click(e);
 		}
 	}
 	
 	public void mouseEntered(MouseEvent arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 	
 	public void mouseExited(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
+		mouseDown = false;
 	}
 	
 	public void mouseClicked(MouseEvent arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 	
 	public void mouseReleased(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
+		mouseDown = false;
 	}
 	
 	public void mouseWheelMoved(MouseWheelEvent e) {
@@ -276,5 +329,11 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 				zoomTarget *= 1.1;
 			}
 		}
+	}
+	
+	public void setTool(int t) {
+		sim.tool = t;
+		
+		baseHud.infoPanel.visible = t == 0;
 	}
 }
