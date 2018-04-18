@@ -18,7 +18,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	public static void log(String s) {
 		console.add(s);
 		consoleLength++;
-		consoleTimer = 150;
+		consoleTimer = 75;
 	}
 	
 	private class graphicsTicker implements Runnable {
@@ -59,8 +59,10 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	CreationPanel createHud = new CreationPanel();
 	
 	boolean enableUserZooming = false;
+	boolean enableRuler = false;
 	
 	boolean mouseDown = false;
+	boolean dragging = false;
 	
 	public EPanel(Simulation sim) {
 		HudPart.panel = this;
@@ -76,6 +78,10 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	int tick = 0;
 	int mouseX = 0;
 	int mouseY = 0;
+	int dmx = 0;
+	int dmy = 0;
+	double dcx = 0;
+	double dcy = 0;
 	
 	float playFade = 0;
 	float loadFade = 0;
@@ -95,7 +101,17 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 		else if(consoleLength > 0) {
 			consoleLength--;
 			console.remove(0);
-			consoleTimer = 150;
+			consoleTimer = 75;
+		}
+		
+		if(!dragging) {
+			dmx = mouseX;
+			dmy = mouseY;
+			dcx = camX;
+			dcy = camY;
+		} else {
+			camX = dcx + (dmx - mouseX)/zoomTarget;
+			camY = dcy + (dmy - mouseY)/zoomTarget;
 		}
 		
 		if(overPlay) playFade -= (playFade-1)/10f;
@@ -220,6 +236,9 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 			g.setColor(new Color(1f, 0.25f, 0.25f));
 			g.drawString("currently nonfunctional (click in center)", (width-getFontMetrics(f).stringWidth("currently nonfunctional (click in center)"))/2, height/2+5);
 		} else if(sim.state == Simulation.STATE_GAME) {
+			//Draw the ruler, if it's enabled
+			
+			
 			//Draw the hud elements
 			baseHud.width = width;
 			baseHud.height = height;
@@ -245,7 +264,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	
 	private void translateGraphics(Graphics2D g) {
 		AffineTransform t = new AffineTransform();
-		t.translate(getWidth()/2-camX, getHeight()/2-camY);
+		t.translate((getWidth()/2-camX*zoom), (getHeight()/2-camY*zoom));
 		t.scale(zoom, zoom);
 		g.transform(t);
 	}
@@ -292,15 +311,18 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 				overLCancel = false;
 			} else if(overBegin) {
 				zoomTarget = 1;
+				Console.log("Creating simulation...");
+				if(createHud.sizeButton.current == 0) sim.size = 1000;
+				else if(createHud.sizeButton.current == 1) sim.size = 5000;
+				else if(createHud.sizeButton.current == 2) sim.size = 10000;
 				enableUserZooming = true;
 				sim.state = Simulation.STATE_GAME;
-				Console.log("Creating simulation...");
 			} else {
 				createHud.click(e);
 			}
 		} else if(sim.state == Simulation.STATE_GAME) {
 			baseHud.click(e);
-			if(!baseHud.lastMouseConsumed) sim.click(e);
+			if(!baseHud.lastMouseConsumed) dragging = sim.click(e);
 		}
 	}
 	
@@ -310,6 +332,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	
 	public void mouseExited(MouseEvent arg0) {
 		mouseDown = false;
+		dragging = false;
 	}
 	
 	public void mouseClicked(MouseEvent arg0) {
@@ -318,16 +341,18 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	
 	public void mouseReleased(MouseEvent arg0) {
 		mouseDown = false;
+		dragging = false;
 	}
 	
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		if(enableUserZooming) {
+		if(enableUserZooming && !dragging) {
 			for(int i = 0; i < e.getWheelRotation(); i++) {
 				zoomTarget /= 1.1;
 			}
 			for(int i = 0; i > e.getWheelRotation(); i--) {
 				zoomTarget *= 1.1;
 			}
+			zoomTarget = Math.max(0.001, Math.min(100, zoomTarget));
 		}
 	}
 	

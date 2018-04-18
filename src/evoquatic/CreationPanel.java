@@ -20,16 +20,24 @@ public class CreationPanel extends HudPart {
 		super.height = 300;
 		
 		sizeButton.x = 11;
-		sizeButton.y = 10;
+		sizeButton.y = 25;
 		sizeButton.width = 198;
 		sizeButton.height = 20;
+		
+		genrateButton.x = 391;
+		genrateButton.y = 25;
+		genrateButton.width = 198;
+		genrateButton.height = 20;
 		super.children.add(sizeButton);
 		super.children.add(genrateButton);
 		super.children.add(mutrateButton);
-		
 	}
 	
 	public void draw(Graphics2D g, int ox, int oy) {
-		
+		Font f = new Font("DialogInput", Font.PLAIN, 15);
+		g.setFont(f);
+		FontMetrics m = g.getFontMetrics(f);
+		g.setColor(Color.WHITE);
+		g.drawString("world bounds", ox+100-m.stringWidth("world bounds")/2, oy+20);
 	}
 }

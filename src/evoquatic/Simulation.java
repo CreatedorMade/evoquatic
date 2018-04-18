@@ -79,7 +79,7 @@ public class Simulation {
 		}
 	}
 	
-	public void click(MouseEvent e) {
-		Console.log("Sipp and succ, cool and good");
+	public boolean click(MouseEvent e) {
+		return true;
 	}
 }

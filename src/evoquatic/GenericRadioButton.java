@@ -46,7 +46,7 @@ public class GenericRadioButton extends HudPart {
 			
 			//Draw the text
 			g.setColor(new Color(1f, 1f, 1f));
-			g.drawString(strs[i], ox+(divWidth*(i))+m.stringWidth(strs[i])/2, oy+17);
+			g.drawString(strs[i], divWidth/2+ox+(divWidth*(i))-m.stringWidth(strs[i])/2, oy+17);
 		}
 	}
 }
