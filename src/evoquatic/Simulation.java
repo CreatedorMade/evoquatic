@@ -39,10 +39,11 @@ public class Simulation {
 		boolean rt = false;
 		boolean running = false;
 		
+		@SuppressWarnings("unused")
 		Simulation sim;
 		
-		public SimThread(Simulation sim) {
-			this.sim = sim;
+		public SimThread(Simulation simulation) {
+			sim = simulation;
 		}
 		
 		public void run() {

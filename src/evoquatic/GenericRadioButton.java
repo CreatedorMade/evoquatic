@@ -3,8 +3,6 @@ package evoquatic;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-import javax.swing.*;
-
 public class GenericRadioButton extends HudPart {
 	int divs = 1;
 	int current = 0;
