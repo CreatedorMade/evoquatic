@@ -37,6 +37,7 @@ public class Simulation {
 	int foodSize = 0;
 	
 	ArrayList<AbstractNodeObject> nodes = new ArrayList<AbstractNodeObject>();
+	ArrayList<AbstractVectorObject> vectors = new ArrayList<AbstractVectorObject>();
 	
 	public Simulation() {
 	}
@@ -50,7 +51,6 @@ public class Simulation {
 		boolean rt = false;
 		boolean running = false;
 		
-		@SuppressWarnings("unused")
 		Simulation sim;
 		
 		public SimThread(Simulation simulation) {
@@ -66,6 +66,11 @@ public class Simulation {
 				genTimer--;
 				if(genTimer == 0) {
 					genTimer = genDelay;
+					
+					double angle = Math.random() * Math.PI * 2;
+					double distance = Math.random()*size/2;
+					
+					nodes.add(new Egg(Math.cos(angle)*distance, Math.sin(angle)*distance));
 				}
 				
 				//Food spawn timing
@@ -76,13 +81,26 @@ public class Simulation {
 					double angle = Math.random() * Math.PI * 2;
 					double distance = Math.random()*size/2;
 					
-					//nodes.add(new GreenFood((Math.random()*0.15+0.05)*foodSize, Math.cos(angle)*distance, Math.sin(angle)*distance));
-					nodes.add(new GreenFood(Math.random()*0.05+0.05, 0, 0));
+					nodes.add(new GreenFood((Math.random()*0.15+0.05)*foodSize, Math.cos(angle)*distance, Math.sin(angle)*distance));
+					//nodes.add(new GreenFood(Math.random()*0.05+0.05, 0, 0));
 				}
 				
 				//Remove null nodes
 				for(int i = 0; i < nodes.size(); i++) {
 					if(nodes.get(i) == null) nodes.remove(i);
+					else if(nodes.get(i).delete) {
+						nodes.remove(i);
+					}
+				}
+				
+				//Iteration over each vector
+				for(AbstractVectorObject v : vectors) {
+					if(v.n1 == null || v.n2 == null) {
+						v = null;
+						vectors.remove(v);
+					} else {
+						v.code(time);
+					}
 				}
 				
 				//Iteration over each node
@@ -107,7 +125,6 @@ public class Simulation {
 								double dist = Point2D.distance(n.x, n.y, n2.x, n2.y);
 								if(dist < n1r+n2r) {
 									double theta = (Math.atan2(n2.y - n.y, n2.x - n.x));
-									dist += dist*0.1;
 									n.applyImpulse(-(float) (Math.cos(theta)*(n1r+n2r-dist)), -(float) (Math.sin(theta)*(n1r+n2r-dist)));
 									n.collideWith(n2);
 								}

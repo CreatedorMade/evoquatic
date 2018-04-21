@@ -15,10 +15,22 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	private static int consoleLength = 0;
 	private static int consoleTimer = 0;
 	
+	AbstractNodeObject selection = null;
+	
+	public static long frameDelay = 33333332L;
+	
 	public static void log(String s) {
 		console.add(s);
 		consoleLength++;
 		consoleTimer = 75;
+	}
+	
+	public double sx(int mx) {
+		return ((((double) (mx))-getWidth()/2)/zoom - camX)/100;
+	}
+	
+	public double sy(int mx) {
+		return ((((double) (mx))-getHeight()/2)/zoom - camY)/100;
 	}
 	
 	private class graphicsTicker implements Runnable {
@@ -32,7 +44,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 			while(panel.isVisible()) {
 				Long time = System.nanoTime();
 				panel.tick();
-				sync(time + 33333332L);
+				sync(time + frameDelay);
 			}
 		}
 		
@@ -63,6 +75,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	
 	boolean mouseDown = false;
 	boolean dragging = false;
+	boolean measuring = false;
 	
 	public EPanel(Simulation sim) {
 		HudPart.panel = this;
@@ -80,6 +93,8 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	int mouseY = 0;
 	int dmx = 0;
 	int dmy = 0;
+	int mmx = 0;
+	int mmy = 0;
 	double dcx = 0;
 	double dcy = 0;
 	
@@ -114,6 +129,11 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 			camY = dcy + (dmy - mouseY)/zoomTarget;
 		}
 		
+		if(!measuring) {
+			mmx = mouseX;
+			mmy = mouseY;
+		}
+		
 		if(overPlay) playFade -= (playFade-1)/10f;
 		else playFade -= playFade/10f;
 		if(overLoad) loadFade -= (loadFade-1)/10f;
@@ -123,7 +143,14 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 		if(overBegin) beginFade -= (beginFade-1)/10f;
 		else beginFade -= beginFade/10f;
 		
-		zoom -= (zoom-zoomTarget)/10;
+		//Recenter the camera if it's not in the simulation
+		if(Point2D.distance(camX, camY, 0, 0) > sim.size*50) {
+			double angle = Math.atan2(camY, camX);
+			camX -= (camX-(Math.cos(angle)*sim.size*50))/10f;
+			camY -= (camY-(Math.sin(angle)*sim.size*50))/10f;
+		}
+		
+		zoom -= (zoom-zoomTarget)/10f;
 		tick++;
 		repaint();
 	}
@@ -236,8 +263,128 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 			g.setColor(new Color(1f, 0.25f, 0.25f));
 			g.drawString("currently nonfunctional (click in center)", (width-getFontMetrics(f).stringWidth("currently nonfunctional (click in center)"))/2, height/2+5);
 		} else if(sim.state == Simulation.STATE_GAME) {
-			//Draw the ruler, if it's enabled
+			//Center the camera over the selection
+			if(selection != null) {
+				camX -= (camX-selection.x*100)/10f;
+				camY -= (camY-selection.y*100)/10f;
+			}
 			
+			//Draw the vector objects
+			AffineTransform t = new AffineTransform();
+			t.translate((getWidth()/2-camX*zoom), (getHeight()/2-camY*zoom));
+			t.scale(zoom, zoom);
+			g.setTransform(t);
+			for(AbstractVectorObject v : sim.vectors) {
+				
+			}
+			
+			//Draw the node objects
+			for(AbstractNodeObject n : sim.nodes) {
+				//Determine if it's onscreen
+				int sx = (int) ((n.x*100*zoom)-(camX*zoom)+(width/2));
+				int sy = (int) ((n.y*100*zoom)-(camY*zoom)+(height/2));
+				int ss = (int) (n.getRadius()*zoom*100);
+				
+				if(sx+ss >= 0 && sx-ss <= width && sy+ss >= 0 && sy-ss <= height) {
+					if(ss != 0) {
+						int r = (int) (n.getRadius()*100);
+					
+						g.setColor(n.getColor());
+						g.fillOval((int) (n.x*100)-r, (int) (n.y*100)-r, r*2, r*2);
+						g.setColor((n.equals(selection)) ? Color.WHITE : Color.BLACK);
+						g.drawOval((int) (n.x*100)-r, (int) (n.y*100)-r, r*2, r*2);
+					} else {
+						g.setColor((n.equals(selection)) ? Color.WHITE : Color.BLACK);
+						g.fillOval((int) (n.x*100), (int) (n.y*100), (int) (2/zoom), (int) (2/zoom));
+					}
+				}
+			}
+			
+			g.setTransform(new AffineTransform());
+			//Draw the ruler, if it's enabled
+			g.setColor(new Color(1f, 1f, 1f));
+			if(enableRuler) {
+				int mw = width-400;
+				
+				Font f = new Font("DialogInput", Font.PLAIN, 15);
+				FontMetrics m = getFontMetrics(f);
+				g.setFont(f);
+				
+				//Centimeters
+				if(zoom > 10 && zoom < mw-50) {
+					g.drawLine(50+(int) (zoom), 80, 50+(int) (zoom), 100);
+					g.drawString("1cm", 50+(int) (zoom)-m.stringWidth("1cm")/2, 75);
+					g.drawString((int) (zoom)+"px", 50+(int) (zoom)-m.stringWidth((int) (zoom)+"px")/2, 115);
+				}
+				//Decimeters
+				if(10 * zoom > 10 && 10*zoom < mw-50) {
+					g.drawLine(50+(int) (10*zoom), 80, 50+(int) (10*zoom), 100);
+					g.drawString("1dm", 50+(int) (10*zoom)-m.stringWidth("1dm")/2, 75);
+					g.drawString((int) (10*zoom)+"px", 50+(int) (10*zoom)-m.stringWidth((int) (10*zoom)+"px")/2, 115);
+				}
+				//Meters
+				if(100 * zoom > 10 && 100*zoom < mw-50) {
+					g.drawLine(50+(int) (100*zoom), 80, 50+(int) (100*zoom), 100);
+					g.drawString("1m", 50+(int) (100*zoom)-m.stringWidth("1m")/2, 75);
+					g.drawString((int) (100*zoom)+"px", 50+(int) (100*zoom)-m.stringWidth((int) (100*zoom)+"px")/2, 115);
+				}
+				//Decameters
+				if(1000 * zoom > 10 && 1000*zoom < mw-50) {
+					g.drawLine(50+(int) (1000*zoom), 80, 50+(int) (1000*zoom), 100);
+					g.drawString("1dam", 50+(int) (1000*zoom)-m.stringWidth("1dam")/2, 75);
+					g.drawString((int) (1000*zoom)+"px", 50+(int) (1000*zoom)-m.stringWidth((int) (1000*zoom)+"px")/2, 115);
+				}
+				//Hectometers
+				if(10000 * zoom > 10 && 10000*zoom < mw-50) {
+					g.drawLine(50+(int) (10000*zoom), 80, 50+(int) (10000*zoom), 100);
+					g.drawString("1hm", 50+(int) (10000*zoom)-m.stringWidth("1hm")/2, 75);
+					g.drawString((int) (10000*zoom)+"px", 50+(int) (10000*zoom)-m.stringWidth((int) (10000*zoom)+"px")/2, 115);
+				}
+				//Kilometers
+				if(100000 * zoom > 10 && 100000*zoom < mw-50) {
+					g.drawLine(50+(int) (100000*zoom), 80, 50+(int) (100000*zoom), 100);
+					g.drawString("1km", 50+(int) (100000*zoom)-m.stringWidth("1km")/2, 75);
+					g.drawString((int) (100000*zoom)+"px", 50+(int) (100000*zoom)-m.stringWidth((int) (100000*zoom)+"px")/2, 115);
+				}
+				
+				String str;
+				
+				double distance = Point2D.distance(sx(50), sy(90), sx(50+mw), sy(90));
+				if(distance < 0.1) str = (double) (Math.round(distance*10000))/100+"cm";
+				else if(distance < 1) str = (double) (Math.round(distance*1000))/100+"dm";
+				else if(distance < 10) str = (double) (Math.round(distance*100))/100+"m";
+				else if(distance < 100) str = (double) (Math.round(distance*10))/100+"dam";
+				else if(distance < 1000) str = (double) (Math.round(distance))/100+"hm";
+				else str = (double) (Math.round(distance/10))/100+"km";
+				
+				g.drawLine(50, 80, 50, 100);
+				g.drawLine(50, 90, 50+mw, 90);
+				g.drawLine(50+mw, 80, 50+mw, 100);
+				g.drawString(mw+"px", 50+mw-m.stringWidth(mw+"px")/2, 115);
+				g.drawString(str, 50+mw-m.stringWidth(str)/2, 75);
+			}
+			
+			//Draw the measuring tape, if needed
+			if(measuring) {
+				Font f = new Font("DialogInput", Font.PLAIN, 15);
+				FontMetrics m = getFontMetrics(f);
+				g.setFont(f);
+				
+				g.drawOval(mmx-4, mmy-4, 9, 9);
+				g.drawOval(mouseX-4, mouseY-4, 9, 9);
+				g.drawLine(mmx, mmy, mouseX, mouseY);
+				
+				String str;
+				
+				double distance = Point2D.distance(sx(mmx), sy(mmy), sx(mouseX), sy(mouseY));
+				if(distance < 1) str = (double) (Math.round(distance*10000))/100+"cm";
+				else if(distance < 100) str = (double) (Math.round(distance*100))/100+"m";
+				else if(distance < 1000) str = Math.round(distance)+"m";
+				else str = (double) (Math.round(distance/10))/100+"km";
+				
+				if(mouseX > mmx) g.drawString(str, mouseX+10, mouseY-10);
+				else if(mouseX <= mmx) g.drawString(str, mouseX-10-m.stringWidth(str), mouseY-10);
+			}
 			
 			//Draw the hud elements
 			baseHud.width = width;
@@ -295,6 +442,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 		if(sim.state == Simulation.STATE_TITLE_MAIN) {
 			if(overPlay) {
 				sim.state = Simulation.STATE_TITLE_OPTIONS;
+				createHud = new CreationPanel();
 				overPlay = false;
 			} else if(overLoad) {
 				sim.state = Simulation.STATE_TITLE_LOAD;
@@ -310,19 +458,34 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 				sim.state = Simulation.STATE_TITLE_MAIN;
 				overLCancel = false;
 			} else if(overBegin) {
-				zoomTarget = 1;
 				Console.log("Creating simulation...");
-				if(createHud.sizeButton.current == 0) sim.size = 1000;
-				else if(createHud.sizeButton.current == 1) sim.size = 5000;
-				else if(createHud.sizeButton.current == 2) sim.size = 10000;
-				enableUserZooming = true;
+				if(createHud.sizeButton.current == 0) sim.size = 250;
+				else if(createHud.sizeButton.current == 1) sim.size = 500;
+				else if(createHud.sizeButton.current == 2) sim.size = 1000;
+				if(createHud.genrateButton.current == 0) sim.genDelay = 6000;
+				else if(createHud.genrateButton.current == 1) sim.genDelay = 360;
+				else if(createHud.genrateButton.current == 2) sim.genDelay = 180;
+				if(createHud.foodrateButton.current == 0) sim.foodDelay = 108;
+				else if(createHud.foodrateButton.current == 1) sim.foodDelay = 36;
+				else if(createHud.foodrateButton.current == 2) sim.foodDelay = 12;
+				if(createHud.foodsizeButton.current == 0) sim.foodSize = 1;
+				else if(createHud.foodsizeButton.current == 1) sim.foodSize = 2;
+				else if(createHud.foodsizeButton.current == 2) sim.foodSize = 4;
 				sim.state = Simulation.STATE_GAME;
+				enableUserZooming = true;
+				zoomTarget = 1;
+				sim.setMode(1);
+				Console.log("Simulation created.");
 			} else {
 				createHud.click(e);
 			}
 		} else if(sim.state == Simulation.STATE_GAME) {
 			baseHud.click(e);
-			if(!baseHud.lastMouseConsumed) dragging = sim.click(e);
+			if(!baseHud.lastMouseConsumed) {
+				boolean clicked = sim.click(e);
+				dragging = clicked && sim.tool != 2;
+				measuring = clicked && sim.tool == 2;
+			}
 		}
 	}
 	
@@ -333,6 +496,7 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	public void mouseExited(MouseEvent arg0) {
 		mouseDown = false;
 		dragging = false;
+		measuring = false;
 	}
 	
 	public void mouseClicked(MouseEvent arg0) {
@@ -342,17 +506,18 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 	public void mouseReleased(MouseEvent arg0) {
 		mouseDown = false;
 		dragging = false;
+		measuring = false;
 	}
 	
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		if(enableUserZooming && !dragging) {
+		if(enableUserZooming && !dragging && !measuring) {
 			for(int i = 0; i < e.getWheelRotation(); i++) {
 				zoomTarget /= 1.1;
 			}
 			for(int i = 0; i > e.getWheelRotation(); i--) {
 				zoomTarget *= 1.1;
 			}
-			zoomTarget = Math.max(0.001, Math.min(100, zoomTarget));
+			zoomTarget = Math.max(0.005, Math.min(1000, zoomTarget));
 		}
 	}
 	
@@ -360,5 +525,6 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 		sim.tool = t;
 		
 		baseHud.infoPanel.visible = t == 0;
+		baseHud.actionPanel.visible = t == 1;
 	}
 }

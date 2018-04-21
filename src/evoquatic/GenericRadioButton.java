@@ -32,7 +32,7 @@ public class GenericRadioButton extends HudPart {
 		for(int i = 0; i < divs; i++) {
 			//Highlight if div is selected
 			if(current == i) {
-				g.setColor(new Color(0.25f, 0.25f, 0.25f));
+				g.setColor(new Color(0.25f, 0.45f, 0.45f));
 				g.fillRect(divWidth*(i)+ox, oy, divWidth, super.height);
 			}
 
@@ -44,7 +44,7 @@ public class GenericRadioButton extends HudPart {
 			
 			//Draw the text
 			g.setColor(new Color(1f, 1f, 1f));
-			g.drawString(strs[i], divWidth/2+ox+(divWidth*(i))-m.stringWidth(strs[i])/2, oy+17);
+			g.drawString(strs[i], divWidth/2+ox+(divWidth*(i))-m.stringWidth(strs[i])/2, oy+15);
 		}
 	}
 }

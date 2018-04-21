@@ -24,6 +24,7 @@ public class CenterButton extends HudPart {
 	
 	public void onClick(MouseEvent e, int mx, int my) {
 		Console.log("Camera centered");
+		HudPart.panel.selection = null;
 		HudPart.panel.camX = 0;
 		HudPart.panel.camY = 0;
 	}
