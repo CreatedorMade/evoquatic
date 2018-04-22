@@ -29,10 +29,10 @@ public abstract class AbstractNodeObject implements Neural {
 		code(t);
 	}
 	
-	public final void applyImpulse(float x, float y) {
+	public final void applyImpulse(double d, double e) {
 		if(mass != 0) {
-			vx += x/mass/60;
-			vy += y/mass/60;
+			vx += d/mass/60;
+			vy += e/mass/60;
 		}
 	}
 	

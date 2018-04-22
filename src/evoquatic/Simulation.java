@@ -40,6 +40,21 @@ public class Simulation {
 	ArrayList<AbstractVectorObject> vectors = new ArrayList<AbstractVectorObject>();
 	
 	public Simulation() {
+		for(int i = 0; i < 10; i++) {
+			GreenFood a = new GreenFood(0.01, 0.2+i, 0);
+			GreenFood b = new GreenFood(0.01, 0+i, -1);
+			GreenFood c = new GreenFood(0.01, -0.2+i, 0);
+			GreenFood d = new GreenFood(0.01, 0+i, 1);
+			nodes.add(a);
+			nodes.add(b);
+			nodes.add(c);
+			nodes.add(d);
+			vectors.add(new Rod(a, b));
+			vectors.add(new Rod(b, c));
+			vectors.add(new Rod(c, d));
+			vectors.add(new Rod(d, a));
+			vectors.add(new Rod(a, c));
+		}
 	}
 	
 	private class SimThread implements Runnable {
@@ -82,7 +97,6 @@ public class Simulation {
 					double distance = Math.random()*size/2;
 					
 					nodes.add(new GreenFood((Math.random()*0.15+0.05)*foodSize, Math.cos(angle)*distance, Math.sin(angle)*distance));
-					//nodes.add(new GreenFood(Math.random()*0.05+0.05, 0, 0));
 				}
 				
 				//Remove null nodes
@@ -100,6 +114,23 @@ public class Simulation {
 						vectors.remove(v);
 					} else {
 						v.code(time);
+						
+						double theta = (Math.atan2(v.n2.y - v.n1.y, v.n2.x - v.n1.x));
+						double force = Point2D.distance(v.n1.x, v.n1.y, v.n2.x, v.n2.y)-v.getTargetLength();
+							
+						v.n1.applyImpulse((float) (Math.cos(theta)*force), (float) (Math.sin(theta)*force));
+						v.n2.applyImpulse((float) -(Math.cos(theta)*force), (float) -(Math.sin(theta)*force));
+						
+						//Calculate the drag based on direction of movement and theta
+						double semitheta = theta % Math.PI;
+
+						double mt = (Math.atan2((v.n1.vy+v.n2.vy)/2, (v.n1.vx+v.n2.vx)/2)) - semitheta;
+						double md = Point2D.distance((v.n1.vx+v.n2.vx)/2, (v.n1.vy+v.n2.vy)/2, 0, 0);
+						
+						double slippage = Math.sin(mt)*md;
+						double length = Point2D.distance(v.n1.x, v.n1.y, v.n2.x, v.n2.y);
+						
+						v.applyImpulse(-Math.cos(semitheta+Math.PI/2)*slippage*length, -Math.sin(semitheta+Math.PI/2)*slippage*length);
 					}
 				}
 				
@@ -111,8 +142,8 @@ public class Simulation {
 						double angle = Math.atan2(n.y, n.x);
 						n.applyImpulse((float) (n.x-(Math.cos(angle)*sim.size*50))/1000f, (float) (n.y-(Math.sin(angle)*sim.size*50))/1000f);
 					} else {
-						n.vx = (float) (n.vx*0.95);
-						n.vy = (float) (n.vy*0.95);
+						n.vx = (float) (n.vx*0.99);
+						n.vy = (float) (n.vy*0.99);
 					}
 					
 					//Collision detection
@@ -125,7 +156,7 @@ public class Simulation {
 								double dist = Point2D.distance(n.x, n.y, n2.x, n2.y);
 								if(dist < n1r+n2r) {
 									double theta = (Math.atan2(n2.y - n.y, n2.x - n.x));
-									n.applyImpulse(-(float) (Math.cos(theta)*(n1r+n2r-dist)), -(float) (Math.sin(theta)*(n1r+n2r-dist)));
+									n.applyImpulse(-(float) (Math.cos(theta)*(n1r+n2r-dist))*10, -(float) (Math.sin(theta)*(n1r+n2r-dist))*10);
 									n.collideWith(n2);
 								}
 							}

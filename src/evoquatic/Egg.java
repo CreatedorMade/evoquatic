@@ -7,7 +7,7 @@ public class Egg extends AbstractNodeObject {
 	public static final double DENSITY = 22.41;
 	
 	double progress = 0;
-	double maxRadius = 1.5;
+	double maxRadius = 2.5;
 	int seconds = 300;
 	double mass = 0;
 	double radius = 0;

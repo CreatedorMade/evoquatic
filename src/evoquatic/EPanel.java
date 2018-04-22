@@ -275,7 +275,8 @@ public class EPanel extends JPanel implements MouseListener, MouseMotionListener
 			t.scale(zoom, zoom);
 			g.setTransform(t);
 			for(AbstractVectorObject v : sim.vectors) {
-				
+				g.setColor(v.getColor());
+				g.drawLine((int) (v.n1.x*100), (int) (v.n1.y*100), (int) (v.n2.x*100), (int) (v.n2.y*100));
 			}
 			
 			//Draw the node objects
